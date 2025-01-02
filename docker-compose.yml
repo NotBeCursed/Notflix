@@ -1,0 +1,161 @@
+services:
+    
+    plex:
+      image: lscr.io/linuxserver/plex:latest
+      hostname: plex
+      container_name: notflix-plex
+      restart: unless-stopped
+      environment:
+          - PUID=1000 
+          - PGID=1000 
+          - TZ=Europe/Paris 
+          - VERSION=docker
+          - PLEX_CLAIM= # optional
+      volumes:
+          - $NOTFLIX_PATH/config/plex:/config
+          - $NOTFLIX_PATH/media/series:/tv 
+          - $NOTFLIX_PATH/media/movies:/movies
+      ports:
+        - 32400:32400
+        - 1900:1900/udp 
+        - 5353:5353/udp 
+        - 8324:8324 
+        - 32410:32410/udp 
+        - 32412:32412/udp 
+        - 32413:32413/udp 
+        - 32414:32414/udp 
+        - 32469:32469  
+      networks:
+        notflix_network:
+          aliases:
+            - notflix-plex
+            - plex
+
+    qbittorrent:
+      image: lscr.io/linuxserver/qbittorrent:latest
+      container_name: notflix-qbittorrent
+      hostname: qbittorrent
+      restart: unless-stopped
+      environment:
+        - PUID=1000
+        - PGID=1000
+        - TZ=Europe/Paris
+        - WEBUI_PORT=8080
+        - TORRENTING_PORT=6881
+      volumes:
+        - $NOTFLIX_PATH/config/qbittorrent:/config
+        - $NOTFLIX_PATH/media/downloads:/downloads
+      ports:
+        - 8080:8080
+        - 6881:6881
+        - 6881:6881/udp
+      networks:
+        notflix_network:
+          aliases:
+            - notflix-qbittorrent
+            - qbittorrent
+
+    sonarr:
+      image: lscr.io/linuxserver/sonarr:latest
+      container_name: notflix-sonarr
+      hostname: sonarr
+      restart: unless-stopped
+      environment:
+        - PUID=1000
+        - GUID=1000
+        - TZ=Europe/Paris
+      volumes:
+        - $NOTFLIX_PATH/config/sonarr:/config
+        - $NOTFLIX_PATH/media/series:/tv
+        - $NOTFLIX_PATH/media/downloads:/downloads
+      ports:
+        - 8989:8989
+      networks:
+        notflix_network:
+          aliases:
+            - notflix-sonarr
+            - sonarr
+
+    radarr:
+      image: lscr.io/linuxserver/radarr:latest
+      container_name: notflix-radarr
+      hostname: radarr
+      restart: unless-stopped
+      environment:
+        - PUID=1000
+        - GUID=1000
+        - TZ=Europe/Paris
+      volumes:
+          - $NOTFLIX_PATH/config/radarr:/config
+          - $NOTFLIX_PATH/media/movies:/movies
+          - $NOTFLIX_PATH/media/downloads:/downloads
+      ports:
+        - 7878:7878
+      networks:
+        notflix_network:
+          aliases:
+            - notflix-radarr
+            - radarr
+
+    jackett:
+      image: lscr.io/linuxserver/jackett:latest
+      container_name: notflix-jackett
+      hostname: jackett
+      restart: unless-stopped
+      environment:
+        - PUID=1000
+        - GUID=1000
+        - TZ=Europe/Paris
+        - AUTO_UPDATE=true
+      volumes:
+          - $NOTFLIX_PATH/config/jackett:/config
+          - $NOTFLIX_PATH/media/downloads:/downloads
+      ports:
+        - 9117:9117
+      networks:
+        notflix_network:
+          aliases:
+            - notflix-jackett
+            - jackett
+
+
+    overseerr:
+      image: lscr.io/linuxserver/overseerr:latest
+      container_name: notflix-overseerr
+      hostname: overseerr
+      restart: unless-stopped
+      environment:
+        - PUID=1000
+        - GUID=1000
+        - TZ=Europe/Paris
+      volumes:
+        - $NOTFLIX_PATH/config/overseerr:/config
+      ports:
+        - 5055:5055
+      networks:
+        notflix_network:
+          aliases:
+            - notflix-overseerr
+            - overseerr
+
+    flaresolverr:
+      image: ghcr.io/flaresolverr/flaresolverr:pr-1282
+      container_name: notflix-flaresolverr
+      hostname: flaresolverr
+      restart: unless-stopped
+      environment: 
+        - LOG_LEVEL=info
+        - CAPTCHA_SOLVER=harvester
+        - HARVESTER_ENDPOINT=https://127.0.0.1:5000/token 
+      ports:
+        -  8191:8191
+      networks:
+        notflix_network:
+          aliases:
+            - notflix-flaresolverr
+            - flaresolverr
+
+networks:
+  notflix_network:
+    name: notflix_network
+    external: false
